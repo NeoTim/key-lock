@@ -1,0 +1,401 @@
+#include<reg52.h>
+#include<intrins.h> 
+#define uchar unsigned char 
+#define uint unsigned int 
+uchar code table[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f}; //0-9键值表
+void delay(uint z);    //延时
+void keyscan(); 	   //键盘扫描
+void fun_key(); 	   //功能选择键
+void init(); 		   //初始化
+void disp(uchar a,uchar b,uchar c,uchar d,uchar e,uchar f);  //重置密码时的数字显示
+void reset(); 		//重设密码
+uchar key_yi(uchar);   //密码移位
+void display(uchar);   //数码管显示
+void LED(); 		   //LED显示
+void delay_us(uchar);  //延时
+uchar hang,lie,addres,num,temp,flag,sum,fun,mark,con,N,km;  
+uchar a,b,c,d,e,f; 
+uchar a1,b1,c1,d1,e1,f1; 
+sbit D0=P3^0;   
+sbit D1=P3^1;  
+
+/*********************************************主函数*********************************************/
+void main() 
+{ init();  	  //初始化
+while(1)   
+{
+ 
+   keyscan(); 		//从键盘上读到密码
+   if(N<6) 
+   key_yi(num); 
+   fun_key();  
+   display(N); 	
+     LED();            
+	 if(num=='A')      
+	 {         
+	 while(mark) 
+       {      
+        reset();            
+		mark=0;       
+		}          
+	}  
+} 
+}   
+
+
+/*********************************************初始化*********************************************/
+void init() 
+{ 
+D0=1;  
+D1=1;  
+con=1;  
+mark=0;  
+temp=0xfe;  
+flag=0;  
+fun=0;  
+a1=6;  
+b1=5;  
+c1=4;  
+d1=3;  
+e1=2;  
+f1=1; 	//系统默认密码
+temp=0xfe;    
+  P0=0x73;  //数码管显示P  
+  P2=temp;    
+
+    }
+
+
+
+/*********************************************延时*********************************************/
+void delay(uint z) 
+{ 
+ uint x,y; 
+ for(x=100;x>0;x--)   
+ for(y=z;y>0;y--); 
+ }
+ 
+void delay_us(uchar z) 
+{ 
+ while(--z);  
+ } 
+
+/*********************************************密码移位*********************************************/  
+uchar  key_yi(uchar num) 
+{    
+  if((num==0)||(num==1)||(num==2)||(num==3)||(num==4)||(num==5)||(num==6)||(num==7)||(num==8)||(num==9))    
+  {    
+     if(flag!=0)     
+	 {    
+	 N++;      	 //密码个数加一
+	 flag=0;     //标志位清零 
+	 f=e;      
+	 e=d;      
+	 d=c;      
+	 c=b;      
+	 b=a;		 
+	 a=num;       //密码向右移一位    
+	 }   
+   } 
+	 return(a);   
+}  
+
+/*********************************************键盘扫描*********************************************/
+void keyscan() 
+{ 
+  P1=0xf0;      
+  lie=P1;   
+  P1=0x0f;   
+  hang=P1; 
+  addres=hang|lie; 
+   while(addres!=0xff)      
+   { 
+         delay(5);       
+		 P1=0xf0;       
+		 lie=P1;       
+		 P1=0x0f;       
+		 hang=P1; 
+      addres=hang|lie;        
+	  if(addres!=0xff)         
+	  {   flag++; 
+             switch(addres)            
+			 {  
+            case 0xee:num=1;break;             
+			case 0xde:num=2;break;             
+			case 0xbe:num=3;break;             
+			case 0x7e:num='A';break;             
+			case 0xed:num=4;break;             
+			case 0xdd:num=5;break;             
+			case 0xbd:num=6;break;             
+			case 0x7d:num='B';break;             
+			case 0xeb:num=7;break;             
+			case 0xdb:num=8;break;             
+			case 0xbb:num=9;break;             
+			case 0x7b:num='C';break;             
+			case 0xd7:num=0;break;             
+			case 0x77:num='D';break;   
+           }        
+		    }  
+     }
+	 }
+
+/*********************************************功能选择键*********************************************/	   
+void fun_key() 
+{     
+ if(num=='C')   
+ { 
+   a=b=c=d=e=f=0;    
+   N=0;
+   D0=1;
+   D1=1;   
+   } 
+ if(num=='D')    
+ { num=0xff; 
+    if((a1==a)&&(b1==b)&&(c1==c)&&(d1==d)&&(e1==e)&&(f1==f))      
+	{   
+	mark=1;          	        
+	D0=0; 
+	D1=1;
+    a=b=c=d=e=f=0;         
+	N=0;         
+	km=0;     
+	 } 
+    if((a1!=a)||(b1!=b)||(c1!=c)||(d1!=d)||(e1!=e)||(f1=!f))      
+	{  if(D0!=0)      
+	{ 
+	km++;                  
+	D1=0;
+	        
+	N=0; 
+    a=b=c=d=e=f=0;    
+ 	temp=0xfe;    
+    P0=0x73;  //数码管显示P  
+    P2=temp;     
+	}
+	 }  
+	  }
+	   }
+	   
+/*********************************************输密码时显示“-”*********************************************/	     
+void display(uchar N)
+{ 
+    if(N==1) 
+  {   
+  temp=0xfe;    
+  P0=0x40;  //数码管只显示g段为0x40，即“-”  
+  P2=temp;    
+  delay(1);    
+  P2=0xff;   
+  } 
+   if(N==2) 
+   {   
+   temp=0xfe;       
+   P0=0x40;    
+   P2=temp;    
+   delay(1);   
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1); 
+    } 
+   if(N==3) 
+   {    
+   temp=0xfe;       
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);     
+   } 
+   if(N==4) 
+   {  
+   temp=0xfe;
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);   
+   }
+   if(N==5) 
+   {  
+   temp=0xfe;      
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   } 
+   if(N==6) 
+   {  
+   temp=0xfe;      
+   P0=0x40;    
+   P2=temp;    
+   delay(1);     
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);   
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   P0=0x40;    
+   P2=temp;    
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1);    
+   }  
+    }  
+
+
+/*********************************************LED提示*********************************************/
+void LED() 
+{  
+  if(km==3) 
+   {   
+   km=0; 
+   D0=1;
+   D1=0;   
+   while(1)	
+   { 
+   temp=0xfe;
+   P0=0x7f;    
+   P2=temp;    
+   delay(1);    
+   temp=_crol_(temp,1);   
+   P0=0x7f;    
+   P2=temp;
+   delay(1);    
+   P2=0xff; 
+   temp=_crol_(temp,1); 
+   }   
+     }        
+	 } 
+	 	
+	 
+/*********************************************密码重置*********************************************/
+void reset() 
+ {  a=b=c=d=e=f=0;   
+ 	N=0;      
+	D0=1;
+  while(con)    
+  {  
+    keyscan(); 
+    if(N<6)            
+	key_yi(num); 
+    disp(a,b,c,d,e,f);      
+	if(num=='D')       
+	{con=0;}        
+	if(num=='C') 
+      {
+	  a=b=c=d=e=f=0;          
+	  N=0;
+	  }           
+	  a1=a;        
+	  b1=b;        
+	  c1=c;        
+	  d1=d;        
+	  e1=e;        
+	  f1=f;     
+	  } 
+       a=b=c=d=e=f=0;        
+	   N=0;         
+	   }  
+
+/*********************************************重置密码时的数字显示*********************************************/	   
+void disp(uchar a,uchar b,uchar c,uchar d,uchar e,uchar f)
+{
+ P0=table[a];   
+ P2=temp;    
+ delay(1);   
+ P2=0xff; 
+ temp=_crol_(temp,1);   
+ P0=table[b];   
+ P2=temp;   
+ delay(1);   
+ P2=0xff; 
+ temp=_crol_(temp,1);   
+ P0=table[c];   
+ P2=temp;   
+ delay(1);   
+ P2=0xff; 
+ temp=_crol_(temp,1);   
+ P0=table[d];   
+ P2=temp;   
+ delay(1);   
+ P2=0xff; 
+ temp=_crol_(temp,1);   
+ P0=table[e];   
+ P2=temp;   
+ delay(1);   
+ P2=0xff; 
+ temp=_crol_(temp,1);   
+ P0=table[f];   
+ P2=temp;   
+ delay(1);   
+ P2=0xff; 
+ if(temp=0xef)    
+ temp=0xfe;
+   }  

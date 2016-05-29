@@ -1,0 +1,68 @@
+
+#include"reg51.h"
+unsigned char code dirtab[]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
+                             0x7f,0x6f,0x77,0x7c,0x39,0x5e,0x79,0x71};
+
+unsigned char code tab[4][4]={{0x00,0x04,0x08,0x0c},
+                  			  {0x01,0x05,0x09,0x0d},
+                  		  	  {0x02,0x06,0x0a,0x0e},
+                  			  {0x03,0x07,0x0b,0x0f}}; //0到F的16个键植
+
+void delay(unsigned char a)
+	{
+	unsigned char i;
+	while(a--)
+		for(i=100;i>0;i--)
+			;
+	}
+
+char kbscan()          //键盘扫描
+	{
+ 	unsigned char hang,lie,key;
+
+	if(P1!=0x0f)
+	delay(5);
+	if(P1!=0x0f)
+		{
+		switch(P1&0x0f)
+				{
+				case 0x0e:lie=0;break;
+				case 0x0d:lie=1;break;
+				case 0x0b:lie=2;break;
+				case 0x07:lie=3;break;
+				}
+		P1=0xf0;
+		P1=0xf0;
+		switch(P1&0xf0)
+				{
+				case 0xe0:hang=0;break;
+				case 0xd0:hang=1;break;
+				case 0xb0:hang=2;break;
+				case 0x70:hang=3;break;
+				}
+		P1=0x0f;
+		while(P1!=0x0f);
+		key=tab[hang][lie];
+		}
+	else
+		key=0xAA;
+	return (key);
+	}
+
+
+void main()
+	{
+	unsigned char temp;
+	 	
+	P1=0x0f;
+	
+	while(1)
+		{
+		temp=kbscan();
+		if(temp!=0xAA)
+		  P2=dirtab[temp];
+		 }
+	}
+
+
+
